@@ -35,7 +35,7 @@ Python, Amazon Bedrock, Strands Agents, deterministic governance services, and h
 
 ## Tests
 
-Current deterministic foundation: 34 passing tests.
+Current verified test suite: 41 passing tests.
 
 ## License
 
