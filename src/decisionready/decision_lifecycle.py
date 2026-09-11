@@ -92,6 +92,36 @@ def apply_human_decision(
         decision=decision,
     )
 
+    if new_baseline is not None:
+        report = report.model_copy(
+            update={
+                "next_action": (
+                    f"Baseline v{new_baseline.version} is now active. "
+                    "Execute the approved change and monitor outcomes "
+                    "against the new baseline."
+                )
+            }
+        )
+    elif decision.outcome == DecisionOutcome.REJECTED:
+        report = report.model_copy(
+            update={
+                "next_action": (
+                    f"Decision recorded as REJECTED. Retain baseline "
+                    f"v{baseline.version}; no baseline change is permitted."
+                )
+            }
+        )
+    else:
+        report = report.model_copy(
+            update={
+                "next_action": (
+                    f"Decision recorded as DEFERRED. Retain baseline "
+                    f"v{baseline.version} and revisit when new evidence "
+                    "or conditions justify review."
+                )
+            }
+        )
+
     return DecisionLifecycleResult(
         decision=decision,
         previous_baseline=baseline,
