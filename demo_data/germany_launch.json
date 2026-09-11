@@ -1,0 +1,49 @@
+{
+  "scenario_id": "SCENARIO-001",
+  "scenario_name": "Product Launch — Add Germany",
+  "industry": "Product Launch",
+  "project": {
+    "project_id": "PROJ-001",
+    "name": "Global Product Launch"
+  },
+  "baseline": {
+    "version": 12,
+    "state": {
+      "geography": [
+        "US"
+      ],
+      "launch_date": "2026-10-01",
+      "privacy": {
+        "eu_review": "not_required"
+      },
+      "localization": {
+        "german": false
+      }
+    }
+  },
+  "change": {
+    "change_id": "CR-017",
+    "title": "Add Germany to launch",
+    "description": "Expand the approved US launch to include Germany.",
+    "requested_by": "VP Product"
+  },
+  "proposed_state": {
+    "geography": [
+      "US",
+      "DE"
+    ],
+    "launch_date": "2026-10-15",
+    "privacy": {
+      "eu_review": "required"
+    },
+    "localization": {
+      "german": true
+    }
+  },
+  "story": {
+    "business_question": "Can Germany be added to the launch?",
+    "expected_initial_state": "NOT_READY",
+    "reason": "Required governance evidence and approvals have not yet been satisfied.",
+    "human_decision_required": true
+  }
+}
