@@ -31,7 +31,7 @@ SELF_PROJECT = {
             "hosting": "CloudShell",
             "architecture": {"web_ui": False, "human_governance": True},
             "security": {"bedrock_runtime_access": False},
-            "tests": 41,
+            "tests": 46,
         },
     },
     "change": {
@@ -48,7 +48,7 @@ SELF_PROJECT = {
         "hosting": "Elastic Beanstalk",
         "architecture": {"web_ui": True, "human_governance": True},
         "security": {"bedrock_runtime_access": True},
-        "tests": 41,
+        "tests": 46,
     },
 }
 

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "decisionready"
 version = "0.1.0"
-description = "Autonomous change impact and decision readiness for complex programs"
+description = "Human-governed AI decision readiness for complex programs"
 requires-python = ">=3.11"
 dependencies = [
     "pydantic>=2.10",

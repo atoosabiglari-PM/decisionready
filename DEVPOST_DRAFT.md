@@ -71,4 +71,4 @@ Python, Strands Agents SDK, Amazon Bedrock, Amazon Nova 2 Lite, Streamlit, Pydan
 Public code: https://github.com/atoosabiglari-PM/decisionready
 Live demo: http://decisionready-atoosa.us-west-2.elasticbeanstalk.com
 Video: [ADD PUBLIC YOUTUBE/VIMEO URL]
-AWS Builder ID: [ADD BUILDER ID EMAIL]
+AWS Builder ID: provided in the Devpost submission

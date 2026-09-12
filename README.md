@@ -107,7 +107,7 @@ Default region: `us-west-2`
 
 ## Run Locally
 
-Requires Python 3.13+.
+Requires Python 3.11+.
 
 ```bash
 python -m pip install -e ".[dev]"

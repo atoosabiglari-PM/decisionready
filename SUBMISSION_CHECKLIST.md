@@ -17,7 +17,7 @@ Track: **Professional Agents**
 - [x] Germany Excel demo workbook
 - [x] Evidence document + screenshots
 - [x] Video thumbnail
-- [ ] Update repo README / architecture with this pack and push
+- [x] Update repo README / architecture with this pack and push
 - [ ] Record final video - maximum 5 minutes
 - [ ] Upload video publicly to YouTube or Vimeo
 - [ ] Add final video URL to Devpost
