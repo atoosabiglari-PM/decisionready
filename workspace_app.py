@@ -8,6 +8,7 @@ import streamlit as st
 
 from decisionready.agent import build_agent
 from decisionready.demo_lifecycle import run_governed_demo
+from decisionready.excel_import import xlsx_to_document
 from decisionready.models import DecisionOutcome
 from decisionready.scenario import load_scenario, run_scenario
 from decisionready.workspace import (
@@ -198,91 +199,136 @@ workspace_tab, demo_tab = st.tabs(["Project Workspace", "Germany Demo"])
 with workspace_tab:
     st.markdown('<div class="section">01 · Submit a project change</div>', unsafe_allow_html=True)
     st.header("Project Workspace")
-    st.caption("Start from a template, import a previous package, or enter your project directly.")
+    st.caption(
+        "Business users can upload an Excel project workbook. JSON remains available "
+        "for advanced integrations."
+    )
 
-    a, b, c = st.columns([.46, .27, .27])
-    with a:
-        template = st.selectbox("Template", ["DecisionReady self-project", "Blank project"])
-    with b:
-        st.write("")
-        if st.button("Load template", use_container_width=True):
-            load_form(SELF_PROJECT if template == "DecisionReady self-project" else BLANK_PROJECT)
-            st.session_state.pop("workspace_payload", None)
-            st.session_state.pop("workspace_lifecycle", None)
-            st.rerun()
-    with c:
-        uploaded = st.file_uploader("Import project JSON", type=["json"], label_visibility="collapsed")
+    upload_left, upload_right = st.columns([0.72, 0.28])
+    with upload_left:
+        uploaded = st.file_uploader(
+            "Upload project file",
+            type=["xlsx", "json"],
+            help=(
+                "Recommended: DecisionReady Excel workbook (.xlsx). "
+                "JSON is supported for system-to-system integrations."
+            ),
+        )
+    with upload_right:
+        demo_path = Path("demo_data/DecisionReady_Germany_Project_Demo.xlsx")
+        if demo_path.exists():
+            st.write("")
+            st.download_button(
+                "Download Germany demo Excel",
+                data=demo_path.read_bytes(),
+                file_name="DecisionReady_Germany_Project_Demo.xlsx",
+                mime=(
+                    "application/vnd.openxmlformats-officedocument."
+                    "spreadsheetml.sheet"
+                ),
+                use_container_width=True,
+            )
 
-    if uploaded is not None and st.button("Import uploaded project", use_container_width=True):
+    if uploaded is not None and st.button(
+        "Analyze uploaded project",
+        type="primary",
+        use_container_width=True,
+    ):
         try:
-            imported = json.loads(uploaded.getvalue().decode("utf-8"))
-            analyze_submission(imported)
+            if uploaded.name.lower().endswith(".xlsx"):
+                imported = xlsx_to_document(uploaded.getvalue())
+            else:
+                imported = json.loads(
+                    uploaded.getvalue().decode("utf-8")
+                )
+
+            analysis = analyze_submission(imported)
             load_form(imported)
-            st.session_state.pop("workspace_payload", None)
+            st.session_state["workspace_payload"] = imported
             st.session_state.pop("workspace_lifecycle", None)
+
+            for key in list(st.session_state):
+                if key.startswith(("ev_", "ap_", "blocker_")):
+                    del st.session_state[key]
+
+            st.success(
+                "Project imported. DecisionReady established the approved "
+                "baseline and analyzed the proposed change."
+            )
             st.rerun()
         except Exception as exc:
             st.error(f"Could not import project: {exc}")
 
-    with st.form("project_form"):
-        p1, p2, p3 = st.columns([1.2, 1.0, .55])
-        with p1:
-            st.text_input("Project name", key="f_project_name")
-        with p2:
-            st.text_input("Project ID", key="f_project_id")
-        with p3:
-            st.number_input("Baseline", min_value=1, step=1, key="f_baseline_version")
+    st.markdown(
+        "**No JSON required.** The Excel workbook carries the project, approved "
+        "baseline, and proposed change in familiar business tables."
+    )
 
-        p4, p5 = st.columns(2)
-        with p4:
-            st.text_input("Workspace / scenario", key="f_scenario_name")
-        with p5:
-            st.text_input("Industry / program type", key="f_industry")
+    show_manual = st.toggle(
+        "Enter or edit a project manually (advanced)",
+        value=False,
+    )
 
-        st.markdown("#### Proposed change")
-        x1, x2 = st.columns(2)
-        with x1:
-            st.text_input("Change ID", key="f_change_id")
-            st.text_input("Requested by", key="f_requested_by")
-        with x2:
-            st.text_input("Change title", key="f_change_title")
-            st.text_area("Why is this change needed?", key="f_change_description", height=100)
-
-        st.markdown("#### Current approved baseline → Proposed state")
-        st.caption(
-            "Use structured project facts such as scope, launch_date, budget, privacy, "
-            "security, vendor, contract, architecture, milestone, dependency, risk, or compliance."
-        )
-        s1, s2 = st.columns(2)
-        with s1:
-            st.text_area("Current approved baseline", key="f_baseline_state", height=290)
-        with s2:
-            st.text_area("Proposed state", key="f_proposed_state", height=290)
-
-        submitted = st.form_submit_button(
-            "Submit project for DecisionReady analysis",
-            type="primary",
-            use_container_width=True,
-        )
-
-    if submitted:
-        try:
-            doc = form_document()
-            analysis = analyze_submission(doc)
-            st.session_state["workspace_payload"] = doc
-            st.session_state.pop("workspace_lifecycle", None)
-            for key in list(st.session_state):
-                if key.startswith(("ev_", "ap_", "blocker_")):
-                    del st.session_state[key]
-            if analysis.preparation.detected_changes:
-                st.success("Project submitted. DecisionReady created the authoritative change-readiness package.")
-            else:
-                st.warning("Project submitted, but no baseline delta was detected.")
-        except json.JSONDecodeError as exc:
-            st.error(f"Invalid JSON: line {exc.lineno}, column {exc.colno}.")
-        except Exception as exc:
-            st.error(str(exc))
-
+    if show_manual:
+        with st.form("project_form"):
+            p1, p2, p3 = st.columns([1.2, 1.0, .55])
+            with p1:
+                st.text_input("Project name", key="f_project_name")
+            with p2:
+                st.text_input("Project ID", key="f_project_id")
+            with p3:
+                st.number_input("Baseline", min_value=1, step=1, key="f_baseline_version")
+    
+            p4, p5 = st.columns(2)
+            with p4:
+                st.text_input("Workspace / scenario", key="f_scenario_name")
+            with p5:
+                st.text_input("Industry / program type", key="f_industry")
+    
+            st.markdown("#### Proposed change")
+            x1, x2 = st.columns(2)
+            with x1:
+                st.text_input("Change ID", key="f_change_id")
+                st.text_input("Requested by", key="f_requested_by")
+            with x2:
+                st.text_input("Change title", key="f_change_title")
+                st.text_area("Why is this change needed?", key="f_change_description", height=100)
+    
+            st.markdown("#### Advanced structured baseline → proposed state")
+            st.caption(
+                "Use structured project facts such as scope, launch_date, budget, privacy, "
+                "security, vendor, contract, architecture, milestone, dependency, risk, or compliance."
+            )
+            s1, s2 = st.columns(2)
+            with s1:
+                st.text_area("Current approved baseline data", key="f_baseline_state", height=290)
+            with s2:
+                st.text_area("Proposed state data", key="f_proposed_state", height=290)
+    
+            submitted = st.form_submit_button(
+                "Submit project for DecisionReady analysis",
+                type="primary",
+                use_container_width=True,
+            )
+    
+        if submitted:
+            try:
+                doc = form_document()
+                analysis = analyze_submission(doc)
+                st.session_state["workspace_payload"] = doc
+                st.session_state.pop("workspace_lifecycle", None)
+                for key in list(st.session_state):
+                    if key.startswith(("ev_", "ap_", "blocker_")):
+                        del st.session_state[key]
+                if analysis.preparation.detected_changes:
+                    st.success("Project submitted. DecisionReady created the authoritative change-readiness package.")
+                else:
+                    st.warning("Project submitted, but no baseline delta was detected.")
+            except json.JSONDecodeError as exc:
+                st.error(f"Invalid JSON: line {exc.lineno}, column {exc.colno}.")
+            except Exception as exc:
+                st.error(str(exc))
+    
     if "workspace_payload" in st.session_state:
         doc = st.session_state["workspace_payload"]
         analysis = analyze_submission(doc)
